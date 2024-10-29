@@ -67,15 +67,26 @@ export async function createInvoice(prevState: State, formData: FormData) {
   redirect('/dashboard/invoices');
 }
 
-export async function updateInvoice(id: string, formData: FormData) {
-  //  throw an error to see the error handling provided by the error.tsx
-  throw new Error('Failed to Delete Invoice');
+export async function updateInvoice(
+  id: string,
+  prevState: State,
+  formData: FormData,
+) {
   
-  const { customerId, amount, status } = UpdateInvoice.parse({
+  const validatedFields = UpdateInvoice.safeParse({
     customerId: formData.get('customerId'),
     amount: formData.get('amount'),
     status: formData.get('status'),
   });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Update Invoice.',
+    };
+  }
+
+  const { customerId, amount, status } = validatedFields.data;
  
   const amountInCents = amount * 100;
  
@@ -94,7 +105,6 @@ export async function updateInvoice(id: string, formData: FormData) {
 }
 
 export async function deleteInvoice(id: string) {
-  throw new Error('Failed to Delete Invoice');
 
   try {
     await sql`DELETE FROM invoices WHERE id = ${id}`;
@@ -104,6 +114,4 @@ export async function deleteInvoice(id: string) {
   } catch (error) {
     return { message: 'Database Error: Failed to Delete Invoice.' };
   }
-
-  revalidatePath('/dashboard/invoices');
 }
